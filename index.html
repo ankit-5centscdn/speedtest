@@ -7,12 +7,31 @@
 <script type="text/javascript" src="speedtest.js"></script>
 <script type="text/javascript">
 function I(i){return document.getElementById(i);}
+var testCount = 0;
 //INITIALIZE SPEEDTEST
+var SPEEDTEST_SERVERS=[
+	{
+		name:"Standard", //user friendly name for the server
+		server:"http://206.189.183.219/speedtest/", //URL to the server. // at the beginning will be replaced with http:// or https:// automatically
+		dlURL:"backend/garbage.php",  //path to download test on this server (garbage.php or replacement)
+		ulURL:"backend/empty.php",  //path to upload test on this server (empty.php or replacement)
+		pingURL:"backend/empty.php",  //path to ping/jitter test on this server (empty.php or replacement)
+		getIpURL:"backend/getIP.php"  //path to getIP on this server (getIP.php or replacement)
+	},
+	{	//this server doesn't actually exist, remove it
+		name:"Volume", //user friendly name for the server
+		server:"https://edge-l1-sg-fdc01.cdnized.com/speedtest/", //URL to the server. // at the beginning will be replaced with http:// or https:// automatically
+		dlURL:"backend/garbage.php",  //path to download test on this server (garbage.php or replacement)
+		ulURL:"backend/empty.php",  //path to upload test on this server (empty.php or replacement)
+		pingURL:"backend/empty.php",  //path to ping/jitter test on this server (empty.php or replacement)
+		getIpURL:"backend/getIP.php"  //path to getIP on this server (getIP.php or replacement)
+	}
+];
 var s=new Speedtest(); //create speedtest object
 s.setParameter("telemetry_level","basic"); //enable telemetry
 
 var meterBk=/Trident.*rv:(\d+\.\d+)/i.test(navigator.userAgent)?"#EAEAEA":"#80808040";
-var dlColor="#6060AA",
+var dlColor="#4fa83d",
 	ulColor="#616161";
 var progColor=meterBk;
 
@@ -39,7 +58,7 @@ function drawMeter(c,amount,bk,fg,progress,prog){
 	ctx.arc(c.width/2,c.height-58*sizScale,c.height/1.8-ctx.lineWidth,-Math.PI*1.1,amount*Math.PI*1.2-Math.PI*1.1);
 	ctx.stroke();
 	if(typeof progress !== "undefined"){
-		ctx.fillStyle=prog;
+		ctx.fillStyle='red';
 		ctx.fillRect(c.width*0.3,c.height-16*sizScale,c.width*0.4*progress,4*sizScale);
 	}
 }
@@ -63,6 +82,8 @@ function startStop(){
 		I("startStopBtn").className="";
 		initUI();
 	}else{
+		testCount = 1;
+		s.setSelectedServer(SPEEDTEST_SERVERS[0]);
 		//test is not running, begin
 		I("startStopBtn").className="running";
 		I("shareArea").style.display="none";
@@ -72,17 +93,26 @@ function startStop(){
 		s.onend=function(aborted){
             I("startStopBtn").className="";
             updateUI(true);
-            if(!aborted){
+            if(!aborted){ 
+				if(testCount == 1){
+					I("standardTest").innerHTML=uiData.dlStatus+' Mbit/s';
+					testCount = 2;
+					s.setSelectedServer(SPEEDTEST_SERVERS[1]);
+					s.start();
+				}else{
+					I("volumeTest").innerHTML=uiData.dlStatus+' Mbit/s';
+				}
+
                 //if testId is present, show sharing panel, otherwise do nothing
                 try{
-                    var testId=uiData.testId;
-                    if(testId!=null){
-                        var shareURL=window.location.href.substring(0,window.location.href.lastIndexOf("/"))+"/results/?id="+testId;
-                        I("resultsImg").src=shareURL;
-                        I("resultsURL").value=shareURL;
-                        I("testId").innerHTML=testId;
-                        I("shareArea").style.display="";
-                    }
+                    // var testId=uiData.testId;
+                    // if(testId!=null){
+                    //     var shareURL=window.location.href.substring(0,window.location.href.lastIndexOf("/"))+"/results/?id="+testId;
+                    //     I("resultsImg").src=shareURL;
+                    //     I("resultsURL").value=shareURL;
+                    //     I("testId").innerHTML=testId;
+                    //     I("shareArea").style.display="";
+                    // }
                 }catch(e){}
             }
 		};
@@ -97,10 +127,10 @@ function updateUI(forced){
 	I("ip").textContent=uiData.clientIp;
 	I("dlText").textContent=(status==1&&uiData.dlStatus==0)?"...":format(uiData.dlStatus);
 	drawMeter(I("dlMeter"),mbpsToAmount(Number(uiData.dlStatus*(status==1?oscillate():1))),meterBk,dlColor,Number(uiData.dlProgress),progColor);
-	I("ulText").textContent=(status==3&&uiData.ulStatus==0)?"...":format(uiData.ulStatus);
-	drawMeter(I("ulMeter"),mbpsToAmount(Number(uiData.ulStatus*(status==3?oscillate():1))),meterBk,ulColor,Number(uiData.ulProgress),progColor);
-	I("pingText").textContent=format(uiData.pingStatus);
-	I("jitText").textContent=format(uiData.jitterStatus);
+	// I("ulText").textContent=(status==3&&uiData.ulStatus==0)?"...":format(uiData.ulStatus);
+	// drawMeter(I("ulMeter"),mbpsToAmount(Number(uiData.ulStatus*(status==3?oscillate():1))),meterBk,ulColor,Number(uiData.ulProgress),progColor);
+	// I("pingText").textContent=format(uiData.pingStatus);
+	// I("jitText").textContent=format(uiData.jitterStatus);
 }
 function oscillate(){
 	return 1+0.02*Math.sin(Date.now()/100);
@@ -115,11 +145,11 @@ frame(); //start frame loop
 //function to (re)initialize UI
 function initUI(){
 	drawMeter(I("dlMeter"),0,meterBk,dlColor,0);
-	drawMeter(I("ulMeter"),0,meterBk,ulColor,0);
+	// drawMeter(I("ulMeter"),0,meterBk,ulColor,0);
 	I("dlText").textContent="";
-	I("ulText").textContent="";
-	I("pingText").textContent="";
-	I("jitText").textContent="";
+	// I("ulText").textContent="";
+	// I("pingText").textContent="";
+	// I("jitText").textContent="";
 	I("ip").textContent="";
 }
 </script>
@@ -273,15 +303,16 @@ function initUI(){
 		}
 	}
 </style>
-<title>LibreSpeed Example</title>
+<title>5centscdn</title>
 </head>
 <body>
-<h1>LibreSpeed Example</h1>
+<h1>5centscdn Global Network Diagnostic</h1>
 <div id="testWrapper">
 	<div id="startStopBtn" onclick="startStop()"></div><br/>
-	<a class="privacy" href="#" onclick="I('privacyPolicy').style.display=''">Privacy</a>
+	<a class="privacy" href="https://www.5centscdn.net/tos/" target="_blank">Privacy</a>
+	<!-- <a class="privacy" href="#" onclick="I('privacyPolicy').style.display=''">Privacy</a> -->
 	<div id="test">
-		<div class="testGroup">
+		<!-- <div class="testGroup">
 			<div class="testArea2">
 				<div class="testName">Ping</div>
 				<div id="pingText" class="meterText" style="color:#AA6060"></div>
@@ -292,20 +323,32 @@ function initUI(){
 				<div id="jitText" class="meterText" style="color:#AA6060"></div>
 				<div class="unit">ms</div>
 			</div>
+		</div> -->
+		<div class="testGroup">
+			<div class="testArea2">
+				<div class="testName">STANDARD</div>
+				<div id="standard" style="color:#AA6060"></div>
+				<div id="standardTest">_ _ Mbit/s</div>
+			</div>
+			<div class="testArea2">
+				<div class="testName">ENTERPRISE</div>
+				<div id="volume" style="color:#AA6060"></div>
+				<div id="volumeTest">_ _ Mbit/s</div>
+			</div>
 		</div>
 		<div class="testGroup">
 			<div class="testArea">
-				<div class="testName">Download</div>
+				<!-- <div class="testName">Download</div> -->
 				<canvas id="dlMeter" class="meter"></canvas>
 				<div id="dlText" class="meterText"></div>
 				<div class="unit">Mbit/s</div>
 			</div>
-			<div class="testArea">
+			<!-- <div class="testArea">
 				<div class="testName">Upload</div>
 				<canvas id="ulMeter" class="meter"></canvas>
 				<div id="ulText" class="meterText"></div>
 				<div class="unit">Mbit/s</div>
-			</div>
+			</div> -->
 		</div>
 		<div id="ipArea">
 			<span id="ip"></span>
@@ -317,7 +360,6 @@ function initUI(){
 			<img src="" id="resultsImg" />
 		</div>
 	</div>
-	<a href="https://github.com/librespeed/speedtest">Source code</a>
 </div>
 <div id="privacyPolicy" style="display:none">
     <h2>Privacy Policy</h2>

@@ -3,6 +3,7 @@
 require 'telemetry_settings.php';
 require_once 'telemetry_db.php';
 require_once '../backend/getIP_util.php';
+require_once 'idObfuscation.php';
 
 $ip = getClientIp();
 $ispinfo = $_POST['ispinfo'];
@@ -40,4 +41,5 @@ if (false === $id) {
     exit(1);
 }
 
-echo 'id '.$id;
+// echo 'id '.$id;
+echo 'id '.obfuscateId($id);

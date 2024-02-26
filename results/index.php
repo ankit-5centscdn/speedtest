@@ -98,12 +98,12 @@ function drawImage($speedtest)
 
     // configure fonts
     $FONT_LABEL = tryFont('OpenSans-Semibold');
-    $FONT_LABEL_SIZE = 14 * $SCALE;
-    $FONT_LABEL_SIZE_BIG = 16 * $SCALE;
+    $FONT_LABEL_SIZE = 12 * $SCALE;
+    $FONT_LABEL_SIZE_BIG = 13 * $SCALE;
 
-    $FONT_METER = tryFont('OpenSans-Light');
-    $FONT_METER_SIZE = 20 * $SCALE;
-    $FONT_METER_SIZE_BIG = 22 * $SCALE;
+    $FONT_METER = tryFont('OpenSans-Semibold');
+    $FONT_METER_SIZE = 16 * $SCALE;
+    $FONT_METER_SIZE_BIG = 20 * $SCALE;
 
     $FONT_MEASURE = tryFont('OpenSans-Semibold');
     $FONT_MEASURE_SIZE = 12 * $SCALE;
@@ -127,8 +127,8 @@ function drawImage($speedtest)
     $TEXT_COLOR_MEASURE = imagecolorallocate($im, 40, 40, 40);
     $TEXT_COLOR_ISP = imagecolorallocate($im, 40, 40, 40);
     $SEPARATOR_COLOR = imagecolorallocate($im, 192, 192, 192);
-    $TEXT_COLOR_TIMESTAMP = imagecolorallocate($im, 160, 160, 160);
-    $TEXT_COLOR_WATERMARK = imagecolorallocate($im, 160, 160, 160);
+    $TEXT_COLOR_TIMESTAMP = imagecolorallocate($im, 100, 100, 100);
+    $TEXT_COLOR_WATERMARK = imagecolorallocate($im, 79, 160, 61);
 
     // configure positioning or the different parts on the image
     $POSITION_X_PING = 125 * $SCALE;
@@ -162,13 +162,13 @@ function drawImage($speedtest)
     $POSITION_Y_WATERMARK = 223 * $SCALE;
 
     // configure labels
-    $MBPS_TEXT = 'Mbit/s';
+    $MBPS_TEXT = 'mbps';
     $MS_TEXT = 'ms';
     $PING_TEXT = 'Ping';
     $JIT_TEXT = 'Jitter';
     $DL_TEXT = 'Download';
     $UL_TEXT = 'Upload';
-    $WATERMARK_TEXT = 'LibreSpeed';
+    $WATERMARK_TEXT = '5centscdn';
 
     // create text boxes for each part of the image
     $mbpsBbox = imageftbbox($FONT_MEASURE_SIZE_BIG, 0, $FONT_MEASURE, $MBPS_TEXT);
@@ -182,7 +182,7 @@ function drawImage($speedtest)
     $ulBbox = imageftbbox($FONT_LABEL_SIZE_BIG, 0, $FONT_LABEL, $UL_TEXT);
     $ulMeterBbox = imageftbbox($FONT_METER_SIZE_BIG, 0, $FONT_METER, $ul);
     $watermarkBbox = imageftbbox($FONT_WATERMARK_SIZE, 0, $FONT_WATERMARK, $WATERMARK_TEXT);
-    $POSITION_X_WATERMARK = $WIDTH - $watermarkBbox[4] - 4 * $SCALE;
+    $POSITION_X_WATERMARK = $WIDTH - $watermarkBbox[4] - 6 * $SCALE;
 
     // put the parts together to draw the image
     imagefilledrectangle($im, 0, 0, $WIDTH, $HEIGHT, $BACKGROUND_COLOR);
@@ -205,18 +205,18 @@ function drawImage($speedtest)
     // isp
     imagefttext($im, $FONT_ISP_SIZE, 0, $POSITION_X_ISP, $POSITION_Y_ISP, $TEXT_COLOR_ISP, $FONT_ISP, $ispinfo);
     // separator
-    imagefilledrectangle($im, 0, $SEPARATOR_Y, $WIDTH, $SEPARATOR_Y, $SEPARATOR_COLOR);
+    // imagefilledrectangle($im, 0, $SEPARATOR_Y, $WIDTH, $SEPARATOR_Y, $SEPARATOR_COLOR);
     // timestamp
-    imagefttext($im, $FONT_TIMESTAMP_SIZE, 0, $POSITION_X_TIMESTAMP, $POSITION_Y_TIMESTAMP, $TEXT_COLOR_TIMESTAMP, $FONT_TIMESTAMP, $timestamp);
+    imagefttext($im, $FONT_TIMESTAMP_SIZE, 0, $POSITION_X_TIMESTAMP, $POSITION_Y_TIMESTAMP, $TEXT_COLOR_TIMESTAMP, $FONT_LABEL, $timestamp);
     // watermark
-    imagefttext($im, $FONT_WATERMARK_SIZE, 0, $POSITION_X_WATERMARK, $POSITION_Y_WATERMARK, $TEXT_COLOR_WATERMARK, $FONT_WATERMARK, $WATERMARK_TEXT);
+    imagefttext($im, $FONT_WATERMARK_SIZE, 0, $POSITION_X_WATERMARK, $POSITION_Y_WATERMARK, $TEXT_COLOR_WATERMARK, $FONT_LABEL, $WATERMARK_TEXT);
 
     // send the image to the browser
     header('Content-Type: image/png');
     imagepng($im);
 }
 
-$speedtest = getSpeedtestUserById($_GET['id']);
+$speedtest = getSpeedtestUserById(deobfuscateId($_GET['id']));
 if (!is_array($speedtest)) {
     exit(1);
 }
